@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk
-from workbenchTimerClass import timerPro
+from TimersPro import TimerSet
 
 { # GEM notation & Important sources
 # GEMTest: replaced in final implementation
@@ -30,8 +30,8 @@ banners = ( ("500x500+735+315", "grey"),    # I
             ("279x375+145+614", "Orange"),  # O
             ("279x750+145+239", "Red")      # R
 )
-tSet_timers = { 
-                (5, 5, "March")
+timer_sets = { 
+                (5, 5, "March"),
                 (3, 5, "Chunk"),
                 (4, 5, 8, 2, "Pick-off"),
                 (2, 4, "Meta-skim"),
@@ -46,7 +46,8 @@ root.geometry(current_banner[0]) # GEMTest
 #   2.) a QWERTYUIOP or Home-Row sequence WITH DELAY (2-3s) for your n-step initiation plan before each study session (ex. Q - display Step 2 text; W - dislay Step 3 text; etc.)
 #   3.) notification for when we're terminating the program (tell user in bold caps "Check Cmd Line before closing it!", exit message in 3s)
 }
-#---------------------------------------------------------------------------------------------------------- 
+##=============================[styling the widgets]======================================||
+#
 style = ttk.Style()
 style.configure('TLabel', font = ('Times New Roman', 16))
 style.configure('current.TLabel', font = ('Times New Roman', 50))
@@ -55,17 +56,20 @@ style.configure('phase.TLabel', font = ('Courier New', 12))
 
 study_banner = ttk.Label(root, background = current_banner[1])
 study_banner.grid(column = 0, row = 0, sticky = tk.E + tk.W + tk.N + tk.S)
-#------------------------------------------------------------------------|
+
 tSet_frame = ttk.Frame(root, padding = (30, 0, 30, 0))
 tSet_frame.grid(column = 0, row = 1, sticky = tk.E + tk.W + tk.N +tk.S)
 for col in range(1, 6):                                                    
     tSet_frame.columnconfigure(col, weight = 1)
 tSet_frame.columnconfigure(0, weight = 2)                                  
-#------------------------------------------------------------------------|
+
 phase_frame = ttk.Frame(root, padding = (50, -20, 0, 20))
 phase_frame.grid(column = 0, row = 2, sticky = tk.E + tk.W + tk.N +tk.S)
 for col in range(2):
     phase_frame.columnconfigure(col, weight = 1)
+#
+##========================================================================================||
+
 
 tSet_name = ttk.Label(tSet_frame, text = "None", style = "title.TLabel")                      
 time_current = ttk.Label(tSet_frame, text = "•", style = "current.TLabel")
@@ -88,28 +92,43 @@ current_phase = "None"
 
 phase = ttk.Label(tSet_frame, text = "Phase : " + current_phase, style = "phase.TLabel")
 phase.grid(row = 1, columnspan = 6)
-#---------------------------------------------------------------------------------------------------------- 
 
 
-
-
-
-#---------------------------------------------------------------------------------------------------------- 
-
-# listener = keyboard.Listener(on_press=print('hi')) GEMMaybe
-# listener.start()
-
-root.bind('<FocusIn>', lambda _: tSet_name.configure(text = "Hi!"))
+##===========================[Tkinter keybindings]========================================||
+#
+root.bind('<FocusIn>', lambda _: tSet_name.configure(text = "Hi!"))         # GEMFinal: Use bind_all()
 root.bind('<FocusOut>', lambda _: tSet_name.configure(text = "Boo!"))
-root.bind('<p><q><v>', lambda _: main_timer.start_set([3, 4, 5, 6]))        # to AHK (as alt-1 to 4): <pqv>, <bnm>, <wsx>, and 2 more
+root.bind('<z><q>', lambda _: main_timer.start_set([3, 20, 15, 10]))        # to AHK (as alt-1 to 4): <zq>, <xw>, <cq>, <vw>, <bq>
 
-root.bind('<q><a><z>', lambda _: main_timer.end_timer())                       # in AHK: as alt-enter 
+root.bind('<z><x><c>', lambda _: main_timer.end_timer())                       # in AHK: as alt-enter 
+##========================================================================================||
 
-main_timer = timerPro()                                                         # tSet declaration
 
-root.mainloop()
-main_timer.end_timer()  # Once mainloop is exited, the timer halts.
+
+##==============[test timer functions (print statements, for diagnosis)]==================||
+#
+def test_set_start():
+    print("\nStarting Timer Set...\n")
+def test_set_end():
+    print("\n\nThe timer-set's ended!\n")
+def test_terminate():
+    print("\n\nYou terminated it!\n")
+def test_timer_end(current = 0 ):
+    print("\n\nTimer's up! \n")
+
+main_timer = TimerSet(test_set_start, test_set_end, test_terminate, test_timer_end, True)   
+# 
+##========================================================================================||
+
+
+if __name__ == "__main__":
+    root.mainloop()
+    main_timer.end_timer()  # Once mainloop is exited, the timer halts.
+
+
 # Reminders:
 #   1.) iconic() to minimize
-#----------------------------------------------------------------------------------------------------------
+#   2.) in case of catastrophic keybinding failure in tkinter:
+#       - listener = keyboard.Listener(on_press=print('hi')) GEMMaybe
+#       - listener.start()
 
