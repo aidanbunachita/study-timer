@@ -1,6 +1,6 @@
 #   Future Features:
-#       1. Display_timer parameter that allows the timer set to interact with a tkinter object (for real-time timer display, etc.)
-#
+#       1. Display_timer parameter for all Timers that allows the timer set to interact with a tkinter object (for real-time timer display, etc.)
+#       2. TimerLap class with stopwatch-like functionality
 
 from threading import Event
 from threading import Thread
