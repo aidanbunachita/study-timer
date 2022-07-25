@@ -9,7 +9,7 @@ from TimersPro import TimerSet
 # GEMMaybe: to consider for final implementation
 
 # Source links:
-#   [new main]                      https://www.youtube.com/watch?v=SYkmiKSq7Ls
+#   [new main]                      https://www.youtube.com/watch?v=JjBr1eOo4PU
 #   [main]                          https://tkdocs.com/tutorial/concepts.html 
 #   [docu]                          https://docs.python.org/3/library/tkinter.ttk.html#using-ttk 
 #   [tk grid]                       https://www.pythontutorial.net/tkinter/tkinter-grid/
@@ -129,9 +129,9 @@ root.bind('<z><v>', lambda _: main_timer.terminate())
 
 
 if __name__ == "__main__":
-    main_timer = TimerSet() 
+    main_timer = TimerSet(5) 
     root.mainloop()
-    main_timer.terminate()  # Once mainloop is exited, the timer halts.
+    main_timer.kill_timer()  # Once mainloop is exited, the timer halts.
 
 # Reminders:
 #   1.) iconic() to minimize
