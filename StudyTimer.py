@@ -3,21 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox as tkmb
 from TimersPro import TimerSet
 
-{ # GEM notation & Important sources
-# GEMTest: replaced in final implementation
-# GEMFinal: used in final implementation
-# GEMMaybe: to consider for final implementation
-
-# Source links:
-#   [new main]                      https://www.youtube.com/watch?v=JjBr1eOo4PU
-#   [main]                          https://tkdocs.com/tutorial/concepts.html 
-#   [docu]                          https://docs.python.org/3/library/tkinter.ttk.html#using-ttk 
-#   [tk grid]                       https://www.pythontutorial.net/tkinter/tkinter-grid/
-#   [ttk style]                     https://www.pythontutorial.net/tkinter/ttk-style/
-#   [topmost vs overridedirect]     https://stackoverflow.com/questions/42141414/tkinter-topmost-and-overridedirect 
-}
-#---------------------------------------------------------------------------------------------------------- 
-class TimerWidget():
+class TimerWidget(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (2-3s) for your n-step initiation plan before each study session (ex. Q - display Step 2 text; W - dislay Step 3 text; etc.)
     def __init__(self, banners, timer_sets):
         root = tk.Tk()
         root.title("•••")
@@ -51,10 +37,11 @@ class TimerWidget():
 root = tk.Tk()
 root.title("•••")
 root.attributes('-topmost', True)
-#root.resizable(False, False)
+#   root.resizable(False, False)        
+#   root.bind('<Configure>', lambda a: root.geometry('+%s+%s' % (145,889)))
 root.columnconfigure(0, weight = 1)
 root.rowconfigure(0, weight = 1)
-# root.bind('<Configure>', lambda a: root.geometry('+%s+%s' % (145,889))) 
+ 
 banners = ( ("500x500+735+315", "grey"),    # I
             ("279x140+145+849", "Green"),   # G
             ("279x375+145+614", "Orange"),  # O
@@ -71,8 +58,6 @@ timer_sets = {
 current_banner = banners[1]      # GEMTest
 root.geometry(current_banner[0]) # GEMTest
 
-# Missing:  
-#   2.) a QWERTYUIOP or Home-Row sequence WITH DELAY (2-3s) for your n-step initiation plan before each study session (ex. Q - display Step 2 text; W - dislay Step 3 text; etc.)
 
 ##=============================[styling the widgets]======================================||
 #
@@ -127,15 +112,7 @@ root.bind('<z><v>', lambda _: main_timer.terminate())
 #           
 ##========================================================================================||
 
-
 if __name__ == "__main__":
     main_timer = TimerSet(5) 
     root.mainloop()
-    main_timer.kill_timer()  # Once mainloop is exited, the timer halts.
-
-# Reminders:
-#   1.) iconic() to minimize
-#   2.) in case of catastrophic keybinding failure in tkinter:
-#       - listener = keyboard.Listener(on_press=print('hi')) GEMMaybe
-#       - listener.start()
-
+    main_timer.kill_timer()  # GEMDesc: Once mainloop is exited, the timer halts.
