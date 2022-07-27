@@ -1,110 +1,126 @@
 from threading import Event
 from threading import Thread
 
-class TimerSet():
-    def __init__(self, idle_duration = 300, reactions_dict = {}):       # GEMCurrent: Recheck if you still need to pass the object or if passing the methods is fine once the object exists
-        self.ts_initialize_reactions(reactions_dict)
-        self.ts_initialize_values(idle_duration)
+# GEMGuide:
+#   1.) Changing the Actions it does in response to a Signal: _init_ts_comms(self) [Signal = str : Action = lambda fucntion]
+#   2.) Changing Idle Duration: call TimerSequence with a value argument, i.e. test = TimerSequence(40)
 
-    def ts_initialize_values(self, idle_duration):                      # GEMCurrent: check the code for redundant value initializations
-        self.current_time = 0                                           # GEMDesc: time (in seconds) left in current timer
-        self.timer = Event()                                            #        : timer wait() and set() catcher
-        self.idle_timer = Event()                                       #        : same thing, but for the idle timer
-        self.timer_thread = None                                        #        : timer thread (restricts tSet object to one thread)
-        self.print_timestep = True                                      #        : optional parameter for enabling the second-by-second prints in the command line
-        self.is_idle = True
+class TimerSequence():
+    def __init__(self, idle_duration = 300, idle_steps = 10):  # GEMNote: GUI's have prompters; Timers have signallers.        
+        self._init_ts_values()                        
+        self._init_ts_comms()
         self.idle_duration = idle_duration
-        self.timer_kill = False
+        self.idle_steps = idle_steps
 
-    def ts_initialize_reactions(self, reactions_dict):                  #GEMCurrent: if action is an object method: make the lambda directly call the object (IF THAT FAILS: try to make it an argument in the lambda function.)
-        default_reactions = {
-            "on_set_start" : lambda: print("\nStarting Timer Set...\n"),
-            "on_set_end"   : lambda: print("\n\nThe timer-set's ended!\n"),
-            "on_timer_end" : lambda: print("\n\nNext Timer!\n"),
-            "on_terminate" : lambda: print("\n\nTimer Set Terminated! \n"),
-            "on_idle"      : lambda: print("\n\nIdling... \n"),
-            "on_timestep"  : lambda: print(self.current_time, end = ' ', flush = True) # GEMNote: flush makes print happen in real time [python.exe console]
-        }
-        for action in default_reactions:
-            if action in reactions_dict:
-                setattr(self, action, reactions_dict[action])
-            else:
-                setattr(self, action, default_reactions[action])
+## Initializing Values for TimerSequence
+    def _init_ts_values(self):                      # GEMFinal: check the code for redundant value initializations
+        self.current_time = 0                                           # GEMDesc: time (in seconds) left in current timer
+        self.timer = Event()                                            #   ''   : timer wait() and set() catcher
+        #self.idle_timer = Event()                                      #   ''   : same thing, but for the idle timer [GEMFinal: potentially deprecated]
+        self.timer_thread = None                                        #   ''   : timer thread (restricts tSet object to one thread)
+        self.is_idle = True                                             #   ''   :
+        self.timer_kill = False                                         #   ''   :
 
-## Timer Set Actions
-    def start_set(self, timer_array): 
+## Initializing Comms for TimerSequence
+    def _init_ts_comms(self):
+        self.actions       = { "start_seq"     : lambda seq : self.start_seq(seq),      # GEMFinal: Remember that start_seq's call requires a var
+                                "end_seq"       : lambda _  : self.end_seq(),
+                                "start_idle"    : lambda _  : self.start_idle(),
+                                "kill_timer"    : lambda _  : self.kill_timer(),
+                                "revive_timer"  : lambda _  : self.revive_timer(),
+                                "start_timer"   : lambda _  : self.start_timer(),   # GEMNote: TimerGui doesn't access this by default
+                              }
+
+## TimerSequence's actions
+    def start_seq(self, timer_sequence = None): 
         if self.timer_kill:
             return None
-        if self.is_idle is not False:                                   # GEMNote: If user forgets to return something with their reaction functions, it still gets triggered
+        if self.is_idle is False:           # GEMNote: If user forgets to return something with their reaction functions, it still gets triggered
+            print("\n\nThread is in use!\n")  
+        else:
+            if timer_sequence is None:
+                print("\nHey! You need to give me the timer-seq SOME-how...")
+                return None     
+            self.timer_sequence = timer_sequence
             self.current_time = 0
             self.is_idle = False
-            self.idle_timer.set()
-            self.timer_array = timer_array
             self.timer.clear()
-            self.on_set_start() # GEMFinal []:
-               
-            self.timer_thread = Thread(target = self.start_timer)
-            self.timer_thread.start()                                   # GEMCurrent: Check when this thread dies
-        else:
-            print("\n\nThread is in use!\n")       
-    def start_timer(self):    
-        timer_queue_length = len(self.timer_array)                      # GEMFinal: make use of this for on_timer_end                                                
-        for time in self.timer_array:
-            self.current_time = time
-            while not self.timer.is_set() and self.current_time > 0:
-                if self.timer_kill:
-                    return None
-                if self.print_timestep:
-                    print(self.current_time, end = ' ', flush = True)   # GEMFinal: remove this and incorporate on_timestep
-                self.timer.wait(1) 
-                self.current_time -= 1                     
-            if not self.timer.is_set():
-                self.on_timer_end() #GEMFinal [tSet_frame]: shift style of next & last ()
+            self.prompt("on_seq_start")
+
+            self.timer_thread = Thread(daemon = True, target = self.start_timer)    # GEMFinal: see if daemon is necessary
+            self.timer_thread.start()                                                
+    def end_seq(self):                                       
         if self.timer_kill:
             return None
-        if not self.timer.is_set():                            
-            self.is_idle = self.on_set_end()   # GEMFinal []: Function must return True if 1st option (proceed to idle) is selected
-            self.idle_or_proceed()
-        elif self.timer.is_set():
-            self.is_idle = self.on_terminate()    # GEMFinal [banner, tSet_frame]: change highlight color of the current • AND offer two options: go to idle OR redo timer-array
-            self.idle_or_proceed()
-        
-    def terminate(self):                                       
         if self.timer_thread is None:
             print("No timer threads are active!")
-            return None    
-        self.timer.set()
-        
-    def idle_or_proceed(self):
-        if self.timer_kill:
             return None
-        if self.is_idle is not False:
-            self.idle_timer.clear()
-            self.on_idle()
-            self.idle_timer.wait(self.idle_duration)
-            if not self.idle_timer.is_set():
-                self.start_set([self.idle_duration])
-            else:
-                pass
-        else:
-            self.start_set(self.timer_array)
-    
-    def kill_timer(self):
         self.timer.set()
-        self.idle_timer.wait(3)
-        self.idle_timer.set()
+        self.is_idle = True
+        self.prompt("on_seq_end")   
+    def kill_timer(self):
+        self.prompt("on_timer_kill")
+        self.timer.set()
         self.timer_kill = True
         print("\nTimer Pro has been killed. Have a good day!")
+    def revive_timer(self):
+        if self.timer_kill:
+            self.timer_kill = False
+            self.prompt("on_timer_revive")
+            print("Timer revived successfully!")
+        else:
+            print("Timer hasn't been killed yet!")
+    def start_idle(self):                         
+        self.timer.clear()
+        self.idle_thread = Thread(daemon = True, target = self.start_timer, args = (True,))
+        self.prompt("on_idle_start")                            # GEMFinal edit
+        self.idle_thread.start()
+#--|
+    def start_timer(self, idle = False):                                                 
+        if idle:
+            idle_duration = self.idle_duration
+            idle_step = self.idle_duration / self.idle_steps                           
+            while self.is_idle and idle_duration > 0:       
+                print("\nIdling...")
+                idle_duration -= idle_step
+                self.timer.wait(idle_step)      
+            if self.is_idle and idle_duration == 0:
+                self.timer.set()
+                self.prompt("on_idle_end")                          # GEMFinal edit
+            else:
+                return                                                                          
+        else:
+            for time in self.timer_sequence:
+                self.prompt("on_timer_start", self.timer.is_set())
+                self.current_time = time
+                while not self.timer.is_set() and self.current_time > 0:
+                    if self.timer_kill:
+                        return None
+                    self.prompt("on_timestep", self.current_time)
+                    self.timer.wait(1) 
+                    self.current_time -= 1                                             
+            if not self.is_idle:
+                self._receive_signal("end_seq")
 
 
+## Comms methods for TimerSequence
+    def set_signaller(self, signaller):
+        if hasattr(signaller, "reactions"):
+            self.signaller = signaller
+            print("Signaller set! Remember, your available prompts are: ", self.signaller.reactions.keys())
+        else:
+            "Your signaller has no signals!"
+    def prompt(self, message, reaction_arg = None):           
+        if self.signaller is None:
+            print("Set a signaller first using the set_signaller(signaller) method!")
+        elif message not in self.signaller.reactions:
+            print("Invalid prompt: ", message, "! Remember, your available prompts are: ", self.signaller.reactions.keys())
+        else:
+            self.signaller._receive_prompt(message, reaction_arg)
+    def _receive_signal(self, message, action_arg = None):    # GEMDesc: TimerPro's signal-to-action hub
+        if message in self.actions:
+            self.actions[message](action_arg)
+        else:
+            print("[Error] Was sent an invalid message: ", message)
 
-if __name__ == "__main__":
-    import time
-    testSet = TimerSet(10)
-    testSet.start_set([80, 40, 10, 5])
-    time.sleep(2)
-    testSet.start_set([80, 40, 10, 5])
-    time.sleep(3)
-    testSet.terminate()
-    time.sleep(40)
-    testSet.kill_timer()
+
