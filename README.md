@@ -1,5 +1,5 @@
 
-# **study-timer** : Simple Timer-with-GUI using the *Threading* and *Tkinter* modules.
+# [ver. 0.1] **study-timer**: Simple Timer-with-GUI using the *Threading* and *Tkinter* modules.
 
 ## I. TL:DR
 ### Just read the Shortcuts List in StudyTimer.py and run it! <br> 
