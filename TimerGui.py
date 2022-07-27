@@ -3,8 +3,8 @@ from tkinter import ttk
 from tkinter import messagebox
 
 class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (2-3s) for your n-step initiation plan before each study session (ex. Q - display Step 2 text; W - dislay Step 3 text; etc.)
-    def __init__(self, banners = None):  # GEMNote: GUI's have prompters; Timers have signallers.
-        self._init_tg_timer_seqs()
+    def __init__(self, banners = None, timer_seqs = None):  # GEMNote: GUI's have prompters; Timers have signallers.
+        self._init_tg_timer_seqs(timer_seqs)
         self._init_tg_comms()
 
         self._init_tg_banners(banners)              # GEMDesc: 
@@ -16,12 +16,25 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
         self._init_tg_phase_labels()                #        :
 
 ## Initializing TimerGui Values
+    def _init_tg_timer_seqs(self, timer_seqs):
+        default_timer_seqs = {
+        "Idle"      : (300, ),
+        "March"     : (300, ),
+        "Chunk"     : (180, 300),
+        "Pick-Off"  : (240, 300, 480, 120),
+        "Meta-Skim" : (120, 240),
+        "Review"    : (600, 600, 600, 900, 900)
+        }
+        if not timer_seqs is None:
+            for timer_seq in default_timer_seqs:
+                default_timer_seqs[timer_seq] = timer_seqs[timer_seq]
+        self.timer_seqs = default_timer_seqs   
     def _init_tg_banners(self, banners):
         default_banners = { # GEMNote: the dict formatting was chosen to improve readability 
-            "Dormant"   : {'geometry' : "500x500+735+315", 'color' : "Grey"},
-            "Idle"      : {'geometry' : "279x140+445+849", 'color' : "Green"},  # GEMTest: shift the values to 145 later
-            "Active"    : {'geometry' : "279x375+445+614", 'color' : "Blue"},
-            "Halted"    : {'geometry' : "279x750+445+239", 'color' : "Red"}
+            "Dormant"   : {'geometry' : "500x500+735+355", 'color' : "Grey"},
+            "Idle"      : {'geometry' : "378x140+145+887", 'color' : "Green"},  # GEMTest: shift the values to 145 later
+            "Active"    : {'geometry' : "378x425+145+602", 'color' : "Blue"},
+            "Halted"    : {'geometry' : "378x793+145+234", 'color' : "Red"}
         }
         if not banners is None:
             for banner in default_banners:
@@ -30,6 +43,7 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
         self.current_banner = "Dormant" # GEMNote: These three initializations mirror self.update_window()'s behavior
         self.current_timer_seq = "[None]"
         self.current_timer_count = "" 
+#--|    
     def _init_tg_root(self):
         root = tk.Tk()
         root.title("•••")
@@ -37,11 +51,7 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
         root.columnconfigure(0, weight = 1)
         root.rowconfigure(0, weight = 1)
         root.geometry(self.banners[self.current_banner]['geometry'])
-
-        # GEMFinal: This or overridedirect?
-        # root.resizable(False, False)
-        # root.bind('<Configure>', lambda a: root.geometry(self.current_banner['geometry']))
-        # root.overrideredirect(True)
+        root.overrideredirect(True)
         self.root = root
     def _init_tg_bindings(self):  
         self.root.bind('<z><a>', lambda _: self.signal("start_seq", "Chunk")) 
@@ -80,17 +90,7 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
         self.phase = ttk.Label(self.phase_frame, text = "Phase : " + self.current_phase, style = "phase.TLabel")
         self.phase.grid()
 
-## Initializing Comms for TimerGui
-    def _init_tg_timer_seqs(self):
-        default_timer_seqs = {
-        "Idle"      : (5, ),
-        "March"     : (5, ),
-        "Chunk"     : (3, 5),
-        "Pick-Off"  : (4, 5, 8, 2),
-        "Meta-Skim" : (2, 4),
-        "Review"    : (10, 10, 10, 15, 15)
-        }
-        self.timer_seqs = default_timer_seqs    
+## Initializing Comms for TimerGui 
     def _init_tg_comms(self):
         self.reactions =        {"on_seq_start"  : lambda _           : self._default_seq_start(), 
                                  "on_seq_end"    : lambda _           : self._default_seq_end(),
@@ -165,8 +165,11 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
             print("Invalid signal: ", message, "! Remember, your available signals are: ", self.prompter.actions.keys())
         else:
             if message == "start_seq":                    # GEMNote: unpolished way of handling the start_seq line of action 
-                self.current_timer_seq = action_arg
-                self.prompter._receive_signal(message, self.timer_seqs[self.current_timer_seq])
+                if not self.prompter.is_idle: 
+                    print("\n\nThread is in use!\n") 
+                else:
+                    self.current_timer_seq = action_arg
+                    self.prompter._receive_signal(message, self.timer_seqs[self.current_timer_seq])
             else:
                 self.prompter._receive_signal(message, action_arg)
     def _receive_prompt(self, message, reaction_arg = None):  # GEMDesc: TimerSequence's prompt-to-reaction hub      

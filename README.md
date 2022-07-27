@@ -3,9 +3,6 @@
 
 ## I. TL:DR
 ### Just read the Shortcuts List in StudyTimer.py and run it! <br> 
-
-###### **NOTE:** In its Current Implementation, when starting a timer-set after going out of Idle (when the GUI's banner color is green), if you ***want to exit that new timer-set immediately***, wait at least 3 seconds before doing so! (T-T)
-
 <hr>
 
 ## II. In-Code Documentation (Use Ctrl + F)

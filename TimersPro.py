@@ -44,6 +44,7 @@ class TimerSequence():
             self.timer_sequence = timer_sequence
             self.current_time = 0
             self.is_idle = False
+            self.timer.set()
             self.timer.clear()
             self.prompt("on_seq_start")
 
@@ -55,6 +56,9 @@ class TimerSequence():
         if self.timer_thread is None:
             print("No timer threads are active!")
             return None
+        if self.is_idle:
+            print("You're in Idle!")
+            return
         self.timer.set()
         self.is_idle = True
         self.prompt("on_seq_end")   
@@ -86,9 +90,7 @@ class TimerSequence():
                 self.timer.wait(idle_step)      
             if self.is_idle and idle_duration == 0:
                 self.timer.set()
-                self.prompt("on_idle_end")                          # GEMFinal edit
-            else:
-                return                                                                          
+                self.prompt("on_idle_end")                                                                                     
         else:
             for time in self.timer_sequence:
                 self.prompt("on_timer_start", self.timer.is_set())

@@ -1,6 +1,30 @@
 from TimerGui import TimerGui
 from TimersPro import TimerSequence
 
+default_banners = {     # GEMNote: geometry is: width x height + x-coord + y-coord
+    "Dormant"   : {'geometry' : "500x500+735+355", 'color' : "Grey"},
+    "Idle"      : {'geometry' : "378x140+145+887", 'color' : "Green"}, 
+    "Active"    : {'geometry' : "378x425+145+602", 'color' : "Blue"},
+    "Halted"    : {'geometry' : "378x793+145+234", 'color' : "Red"}
+}
+
+default_timer_seqs = {  # GEMNote: times are in seconds. Also, don't forget to 
+                        # leave a comma after sequences with only one timer in them, like in "Idle" or "March"
+    "Idle"      : (300, ),
+    "March"     : (300, ),
+    "Chunk"     : (180, 300),
+    "Pick-Off"  : (240, 300, 480, 120),
+    "Meta-Skim" : (120, 240),
+    "Review"    : (600, 600, 600, 900, 900)
+}
+
+testGui = TimerGui(default_banners, default_timer_seqs)
+testTimerSeq = TimerSequence(300)  # To set a duration for Idle, place an int argument inside TimerSequence()
+
+testGui.set_prompter(testTimerSeq)
+testTimerSeq.set_signaller(testGui)
+testGui.root.mainloop()
+
 # GEMGuide:
 #   <z + a> - Start Timer-Sequence (Chunk)
 #   <z + q> - Start Timer-Sequence (Pick-Off)
@@ -10,15 +34,13 @@ from TimersPro import TimerSequence
 #   <z+n+i> - Kill Timer 
 #   <z+n+m> - Revive Killed Timer
 
-testGui = TimerGui()
-testTimerSeq = TimerSequence(30)  # To set a duration for Idle, place an int argument inside TimerSequence()
-
-testGui.set_prompter(testTimerSeq)
-testTimerSeq.set_signaller(testGui)
-
-testGui.root.mainloop()
 
 # GEMFuture: Planned Changes
+# 0.) TOP Priority:
+#      a.) Easier geometry, color, & shortcuts configurability, centralized in one place and streamlined (i.e. one width-value for all non-dormant banners, etc.)
+#      b.) Config/Presets functions (i.e. PDFXchange-with-comments-pane-hidden, etc.) that have shortcuts
+#
+#
 # 1.) A TimerPro parent class that contains the basic timer functionality
 #      a.) more modular function implementations, i.e. timer() is called by timer_set() n times, etc.
 #      b.) An on_kill method decorator to check self.timer_kill
