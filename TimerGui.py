@@ -5,15 +5,25 @@ from tkinter import messagebox
 class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (2-3s) for your n-step initiation plan before each study session (ex. Q - display Step 2 text; W - dislay Step 3 text; etc.)
     def __init__(self, banners = None, timer_seqs = None):  # GEMNote: GUI's have prompters; Timers have signallers.
         self._init_tg_timer_seqs(timer_seqs)
-        self._init_tg_comms()
-
         self._init_tg_banners(banners)              # GEMDesc: 
         self._init_tg_root()                        #        :
         self._init_tg_bindings()                    #        :
+#--|       
         self._init_tg_styles()                      #        :
         self._init_tg_frames()                      #        :
         self._init_tg_tseq_labels()                 #        :
         self._init_tg_phase_labels()                #        :
+#--|
+        self.reactions =        {"on_seq_start"  : lambda _           : self._default_seq_start(), 
+                                 "on_seq_end"    : lambda _           : self._default_seq_end(),
+                                 "on_timer_start": lambda seq_is_ended: self._default_timer_start(seq_is_ended),  
+                                 "on_idle_start" : lambda _           : self._default_idle_start(),  
+                                 "on_idle_end"   : lambda _           : self._default_idle_end(),
+                                 "on_timestep"   : lambda current_time: self._default_timestep(current_time),
+                                 "on_idlestep"   : lambda current_time: self._default_idlestep(current_time),
+                                 "on_timer_kill" : lambda _           : self._default_timer_kill(),
+                                 "on_timer_revive":lambda _           : self._default_timer_revive()
+                                }
 
 ## Initializing TimerGui Values
     def _init_tg_timer_seqs(self, timer_seqs):
@@ -59,6 +69,7 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
         self.root.bind('<z><x>', lambda _: self.signal("start_seq", "Meta-Skim"))
         self.root.bind('<z><c>', lambda _: self.signal("start_seq", "Review"))
         self.root.bind('<z><v>', lambda _: self.signal("end_seq"))
+        self.root.bind('<z><space>', lambda _: self.signal("start_idle", True))
         self.root.bind('<z><n><i>', lambda _: self.signal("kill_timer"))
         self.root.bind('<z><n><m>', lambda _: self.signal("revive_timer"))   
 #--|
@@ -90,18 +101,6 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
         self.phase = ttk.Label(self.phase_frame, text = "Phase : " + self.current_phase, style = "phase.TLabel")
         self.phase.grid()
 
-## Initializing Comms for TimerGui 
-    def _init_tg_comms(self):
-        self.reactions =        {"on_seq_start"  : lambda _           : self._default_seq_start(), 
-                                 "on_seq_end"    : lambda _           : self._default_seq_end(),
-                                 "on_timer_start": lambda seq_is_ended: self._default_timer_start(seq_is_ended),  
-                                 "on_idle_start" : lambda _           : self._default_idle_start(),  
-                                 "on_idle_end"   : lambda _           : self._default_idle_end(),
-                                 "on_timestep"   : lambda current_time: self._default_timestep(current_time),
-                                 "on_timer_kill" : lambda _           : self._default_timer_kill(),
-                                 "on_timer_revive":lambda _           : self._default_timer_revive()
-                                }
-
 ## TimerGui's default reactions
     def _default_seq_start(self):   
         self.current_banner = "Active"
@@ -129,12 +128,13 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
         self.current_timer_count = ""
         self._update_window("")
     def _default_idle_end(self):        # GEMFinal: remember to _update_window()
-        print("Idle ended! Proceeding to March.")
+        print("Idle Over!")
         self.signal("start_seq", "March")
 #--|
     def _default_timestep(self, current_time):
         print(current_time, end = ' ', flush = True)   #GEMFuture: change to GUI-related functionality
-        pass
+    def _default_idlestep(self, current_time):
+        print("\nIdling...", end = ' ', flush = True)
     def _default_timer_kill(self):
         self.current_banner = "Dormant"
         self.current_timer_seq = "- - -"
@@ -143,7 +143,6 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
     def _default_timer_revive(self):
         self.current_timer_seq = "Do Somthething!"
         self._update_window()
-
 #--|    
     def _update_window(self, title_seq_barrier = "|"):
         self.root.geometry(self.banners[self.current_banner]['geometry'])
@@ -166,7 +165,7 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
         else:
             if message == "start_seq":                    # GEMNote: unpolished way of handling the start_seq line of action 
                 if not self.prompter.is_idle: 
-                    print("\n\nThread is in use!\n") 
+                    print("Finish the current sequence first!", flush = True)
                 else:
                     self.current_timer_seq = action_arg
                     self.prompter._receive_signal(message, self.timer_seqs[self.current_timer_seq])

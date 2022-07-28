@@ -19,7 +19,8 @@ default_timer_seqs = {  # GEMNote: times are in seconds. Also, don't forget to
 }
 
 testGui = TimerGui(default_banners, default_timer_seqs)
-testTimerSeq = TimerSequence(300)  # To set a duration for Idle, place an int argument inside TimerSequence()
+testTimerSeq = TimerSequence(3, 1)  # GEMNote: 1st int: duration (in s) of your 'idle' [Green-Banner timer] (default: 300) [dont do 1]
+                                     #        : 2nd int: # of times "Idling..." is printed in the terminal (default: 10)
 
 testGui.set_prompter(testTimerSeq)
 testTimerSeq.set_signaller(testGui)
@@ -37,9 +38,11 @@ testGui.root.mainloop()
 
 # GEMFuture: Planned Changes
 # 0.) TOP Priority:
-#      a.) Easier geometry, color, & shortcuts configurability, centralized in one place and streamlined (i.e. one width-value for all non-dormant banners, etc.)
-#      b.) Config/Presets functions (i.e. PDFXchange-with-comments-pane-hidden, etc.) that have shortcuts
-#
+#      a.1.) TRANSFER timer-seqs to TimersPro, fix messages [make the PROMPTS send the timer-seq name to TimerGUI, etc.]
+#      a.2.) Create an "Idle" shortcut, which only fires when you're in the "March" timer-sequence. 
+#      b.) Easier geometry, color, & shortcuts configurability, centralized in one place and streamlined (i.e. one width-value for all non-dormant banners, etc.)
+#      c.) Set-Config/Presets functions (i.e. PDFXchange-with-comments-pane-hidden, etc.) that have shortcuts
+#      d.) More localized functions (minimize direct edits to attributes, etc.)
 #
 # 1.) A TimerPro parent class that contains the basic timer functionality
 #      a.) more modular function implementations, i.e. timer() is called by timer_set() n times, etc.
@@ -64,4 +67,8 @@ testGui.root.mainloop()
 # 1.) Why does StudyTimer hang up when you don't create a new Thread instance once the previous thread has 'stopped'?
 #      a.) Is this an infinite loop?                    
 # 2.) If I create a new thread each time, am I making a thread-in-a-thread? If not, then when does the previous thread terminate/stop?
-
+# 3.) BUG-ish: March start_timer.thread doesn't detect timer.set(), UNLESS:
+#       a.) print("is timer set? ", self.timer.is_set()) is done RIGHT AFTER timer.set(), then timer.clear() right after
+#       b.) OR if .clear() was done after a while
+#     Why? Is it because: 
+#       a.) start_timer checks ONLY after 1 second? So that without the print statement, timer.clear() happens too quickly for start_timer to detect the .set()?
