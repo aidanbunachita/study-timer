@@ -2,8 +2,8 @@ import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
 
-class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (2-3s) for your n-step initiation plan before each study session (ex. Q - display Step 2 text; W - dislay Step 3 text; etc.)
-    def __init__(self, banners = None, timer_seqs = None):  # GEMNote: GUI's have prompters; Timers have signallers.
+class TimerGui(): 
+    def __init__(self, banners = dict(), timer_seqs = dict()):  # GEMNote: GUI's have prompters; Timers have signallers.
         self._init_tg_timer_seqs(timer_seqs)
         self._init_tg_banners(banners)              # GEMDesc: 
         self._init_tg_root()                        #        :
@@ -20,7 +20,7 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
                                  "on_idle_start" : lambda _           : self._default_idle_start(),  
                                  "on_idle_end"   : lambda _           : self._default_idle_end(),
                                  "on_timestep"   : lambda current_time: self._default_timestep(current_time),
-                                 "on_idlestep"   : lambda current_time: self._default_idlestep(current_time),
+                                 "on_idlestep"   : lambda _           : self._default_idlestep(),       
                                  "on_timer_kill" : lambda _           : self._default_timer_kill(),
                                  "on_timer_revive":lambda _           : self._default_timer_revive()
                                 }
@@ -28,30 +28,30 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
 ## Initializing TimerGui Values
     def _init_tg_timer_seqs(self, timer_seqs):
         default_timer_seqs = {
-        "Idle"      : (300, ),
-        "March"     : (300, ),
+        "Idle"      : (300, ),  # GEMNote: In Seconds. If timer_seq has 1 timer, add comma afterwards [like in "Idle" or "March"]
+        "March"     : (300, ),        
         "Chunk"     : (180, 300),
         "Pick-Off"  : (240, 300, 480, 120),
         "Meta-Skim" : (120, 240),
         "Review"    : (600, 600, 600, 900, 900)
         }
-        if not timer_seqs is None:
+        if not timer_seqs == {}:
             for timer_seq in default_timer_seqs:
                 default_timer_seqs[timer_seq] = timer_seqs[timer_seq]
         self.timer_seqs = default_timer_seqs   
     def _init_tg_banners(self, banners):
-        default_banners = { # GEMNote: the dict formatting was chosen to improve readability 
-            "Dormant"   : {'geometry' : "500x500+735+355", 'color' : "Grey"},
-            "Idle"      : {'geometry' : "378x140+145+887", 'color' : "Green"},  # GEMTest: shift the values to 145 later
+        default_banners = { 
+            "Dormant"   : {'geometry' : "500x500+735+355", 'color' : "Grey"},   # GEMNote: geometry is: width x height + x-coord + y-coord
+            "Idle"      : {'geometry' : "378x140+145+887", 'color' : "Green"},  
             "Active"    : {'geometry' : "378x425+145+602", 'color' : "Blue"},
             "Halted"    : {'geometry' : "378x793+145+234", 'color' : "Red"}
         }
-        if not banners is None:
+        if not banners == {}:
             for banner in default_banners:
                 default_banners[banner] = banners[banner]
         self.banners = default_banners
         self.current_banner = "Dormant" # GEMNote: These three initializations mirror self.update_window()'s behavior
-        self.current_timer_seq = "[None]"
+        self.current_timer_seq = "None"
         self.current_timer_count = "" 
 #--|    
     def _init_tg_root(self):
@@ -107,42 +107,48 @@ class TimerGui(): # GEMFinal: add a QWERTYUIOP or Home-Row sequence WITH DELAY (
         self.current_timer_count = ""
         print("Beginning the", self.current_timer_seq, "Timer-Set...")
         self._update_window() 
-    def _default_seq_end(self):             # GEMFinal: give two choices, and either start idle or start "March" seq
+    def _default_seq_end(self):             
         self.current_banner = "Halted"     
         self._update_window()
-        idle_or_not = messagebox.askokcancel('Idle or Repeat?', 'OK if Idle, Tab-Enter if Repeat')
+        idle_or_not = messagebox.askokcancel('Idle or Repeat?', '[[Meta-Breakdown Format]] & Mark w/ "Copper". \nOK to Idle, Cancel to Repeat')
         if idle_or_not:
             self.signal("start_idle")
         else:
             self.signal("start_seq", self.current_timer_seq)
 #--|
     def _default_timer_start(self, seq_is_ended):  
-        if seq_is_ended:
-            self.current_timer_count += "✖️    "
-        else:
-            self.current_timer_count += "⚫    "
-        self._update_window()
+        if  not self.prompter.timer_kill: # GEMFuture: band-aid solution
+            if seq_is_ended:   
+                self.current_timer_count += "✖️    "
+            else:
+                self.current_timer_count += "⚫    "
+            self._update_window()
     def _default_idle_start(self):
         self.current_banner = "Idle"
-        self.current_timer_seq = "• • •"
+        self.current_timer_seq = ""
         self.current_timer_count = ""
         self._update_window("")
-    def _default_idle_end(self):        # GEMFinal: remember to _update_window()
-        print("Idle Over!")
-        self.signal("start_seq", "March")
+    def _default_idle_end(self):        # GEMFinal: make sure all indirect prompts (not from user input) take timer_kill into account
+        if not self.prompter.timer_kill:    # GEMFuture: band-aid solution
+            print("Idle Over!")
+            self.signal("start_seq", "March")
 #--|
     def _default_timestep(self, current_time):
         print(current_time, end = ' ', flush = True)   #GEMFuture: change to GUI-related functionality
-    def _default_idlestep(self, current_time):
-        print("\nIdling...", end = ' ', flush = True)
+    def _default_idlestep(self):
+        if not self.prompter.timer_kill:    # GEMFuture: band-aid solution
+            print("\nIdling...", end = ' ', flush = True)
+            self.current_timer_count += "⚫    "
+            self._update_window("")
     def _default_timer_kill(self):
         self.current_banner = "Dormant"
         self.current_timer_seq = "- - -"
         self.current_timer_count = ""
         self._update_window("")
     def _default_timer_revive(self):
-        self.current_timer_seq = "Do Somthething!"
-        self._update_window()
+        self.current_timer_seq = "Do Something!"
+        self.current_timer_count = ""
+        self._update_window("")
 #--|    
     def _update_window(self, title_seq_barrier = "|"):
         self.root.geometry(self.banners[self.current_banner]['geometry'])

@@ -1,31 +1,6 @@
 from TimerGui import TimerGui
 from TimersPro import TimerSequence
 
-default_banners = {     # GEMNote: geometry is: width x height + x-coord + y-coord
-    "Dormant"   : {'geometry' : "500x500+735+355", 'color' : "Grey"},
-    "Idle"      : {'geometry' : "378x140+145+887", 'color' : "Green"}, 
-    "Active"    : {'geometry' : "378x425+145+602", 'color' : "Blue"},
-    "Halted"    : {'geometry' : "378x793+145+234", 'color' : "Red"}
-}
-
-default_timer_seqs = {  # GEMNote: times are in seconds. Also, don't forget to 
-                        # leave a comma after sequences with only one timer in them, like in "Idle" or "March"
-    "Idle"      : (300, ),
-    "March"     : (300, ),
-    "Chunk"     : (180, 300),
-    "Pick-Off"  : (240, 300, 480, 120),
-    "Meta-Skim" : (120, 240),
-    "Review"    : (600, 600, 600, 900, 900)
-}
-
-testGui = TimerGui(default_banners, default_timer_seqs)
-testTimerSeq = TimerSequence(3, 1)  # GEMNote: 1st int: duration (in s) of your 'idle' [Green-Banner timer] (default: 300) [dont do 1]
-                                     #        : 2nd int: # of times "Idling..." is printed in the terminal (default: 10)
-
-testGui.set_prompter(testTimerSeq)
-testTimerSeq.set_signaller(testGui)
-testGui.root.mainloop()
-
 # GEMGuide:
 #   <z + a> - Start Timer-Sequence (Chunk)
 #   <z + q> - Start Timer-Sequence (Pick-Off)
@@ -35,6 +10,18 @@ testGui.root.mainloop()
 #   <z+n+i> - Kill Timer 
 #   <z+n+m> - Revive Killed Timer
 
+   
+
+testGui = TimerGui()            # GEMNote: TimerGui(banner = dict(), timer_seqs = dict())
+                                #          Go to TimerGui, "default_banners" and "default_timer_seqs" for the format
+
+testTimerSeq = TimerSequence()  # GEMNote: TimerSequence(idle_duration = 300, idle_steps = 10)
+                                #          with duration in seconds & steps being the number of parts you'll divide Idle into (for notification purposes)
+
+testGui.set_prompter(testTimerSeq)
+testTimerSeq.set_signaller(testGui)
+testGui.root.mainloop()
+
 
 # GEMFuture: Planned Changes
 # 0.) TOP Priority:
@@ -43,6 +30,7 @@ testGui.root.mainloop()
 #      b.) Easier geometry, color, & shortcuts configurability, centralized in one place and streamlined (i.e. one width-value for all non-dormant banners, etc.)
 #      c.) Set-Config/Presets functions (i.e. PDFXchange-with-comments-pane-hidden, etc.) that have shortcuts
 #      d.) More localized functions (minimize direct edits to attributes, etc.)
+#      e.) A QWERTYUIOP or Home-Row sequence WITH DELAY (2-3s) for your n-step initiation plan before each study session (ex. Q - display Step 2 text; W - dislay Step 3 text; etc.)
 #
 # 1.) A TimerPro parent class that contains the basic timer functionality
 #      a.) more modular function implementations, i.e. timer() is called by timer_set() n times, etc.

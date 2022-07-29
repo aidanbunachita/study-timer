@@ -39,6 +39,7 @@ class TimerSequence():
             self.timer_sequence = timer_sequence
             self.current_time = 0
             self.is_idle = False
+            self.timer.set()
             self.timer.clear()
             self.prompt("on_seq_start")
 
@@ -59,13 +60,14 @@ class TimerSequence():
     def kill_timer(self):
         self.prompt("on_timer_kill")
         self.timer.set()
+        self.is_idle = True
         self.timer_kill = True
-        print("\nTimer Pro has been killed. Have a good day!")
+        print("\nTimerSequence has been killed. To revive, press <z><n><m>!")
     def revive_timer(self):
         if self.timer_kill:
             self.timer_kill = False
             self.prompt("on_timer_revive")
-            print("Timer revived successfully!")
+            print("TimerSequence revived successfully!")
         else:
             print("Timer hasn't been killed yet!")
 #--|
@@ -75,7 +77,7 @@ class TimerSequence():
             idle_step = self.idle_duration / self.idle_steps                        
             self.timer.clear()
             while self.is_idle and idle_duration > 0:       
-                self.prompt("on_idlestep", idle_duration)
+                self.prompt("on_idlestep")
                 idle_duration -= idle_step
                 self.timer.wait(idle_step)
             if self.is_idle and idle_duration == 0:
@@ -92,8 +94,8 @@ class TimerSequence():
                     self.current_time -= 1                                             
             if not self.is_idle:    # GEMTest
                 self._receive_signal("end_seq")
-    def start_idle(self, direct = False):               # GEMFinal: In the line below, FINALIZE AS: if self.curent_timer_seq = March or timer_seq has ended:
-        if direct and self.is_idle:
+    def start_idle(self, direct = False):               
+        if direct and self.is_idle and self.signaller.current_timer_seq not in ("None", "Do Something!"):       # GEMFuture: Make timer_seq's NATIVE to timersPro, and simply have its prompts relay the timer_seq's title instead
             print("You're already Idle!")
             return None
         elif not self.is_idle and not self.signaller.current_timer_seq == "March":
